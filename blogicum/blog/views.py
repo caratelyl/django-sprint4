@@ -15,7 +15,6 @@ from django.views.generic import (
 )
 
 from users.forms import ProfileForm
-
 from .forms import CommentForm, PostForm
 from .models import Category, Comment, Post
 

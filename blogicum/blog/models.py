@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from constants import FIELD_MAX_LENGTH, COMMENT_STR_MAX_LENGTH
 
-FIELD_MAX_LENGTH = 256
-CATEGORY_STR_MAX_LENGTH = 20
-COMMENT_STR_MAX_LENGTH = 20
 
 User = get_user_model()
 
