@@ -40,7 +40,7 @@ class PublishedModel(models.Model):
 
 class TitleModel(models.Model):
     """Абстрактная модель для добавления поля title и метода __str__."""
-    
+
     title = models.CharField(
         max_length=FIELD_MAX_LENGTH,
         verbose_name='Заголовок',
