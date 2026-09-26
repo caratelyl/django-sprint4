@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -25,17 +24,11 @@ QUANTITY_POSTS = 10
 
 def get_post_queryset(manager=Post.objects, filters=True, with_comments=True):
     """Собрать queryset публикаций с общими правилами выборки."""
-    queryset = manager.select_related('author', 'category', 'location')
+    queryset = manager.with_related()
     if filters:
-        queryset = queryset.filter(
-            is_published=True,
-            pub_date__lte=timezone.now(),
-            category__is_published=True,
-        )
+        queryset = queryset.published()
     if with_comments:
-        queryset = queryset.annotate(
-            comment_count=Count('comments'),
-        ).order_by('-pub_date')
+        queryset = queryset.with_comment_count()
     return queryset
 
 

@@ -1,9 +1,29 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Count
+from django.utils import timezone
+
 from constants import FIELD_MAX_LENGTH, COMMENT_STR_MAX_LENGTH
 
 
 User = get_user_model()
+
+
+class PostQuerySet(models.QuerySet):
+    def with_related(self):
+        return self.select_related('author', 'category', 'location')
+
+    def published(self):
+        return self.filter(
+            is_published=True,
+            pub_date__lte=timezone.now(),
+            category__is_published=True,
+        )
+
+    def with_comment_count(self):
+        return self.annotate(
+            comment_count=Count('comments')
+        ).order_by('-pub_date')
 
 
 class PublishedModel(models.Model):
@@ -18,11 +38,22 @@ class PublishedModel(models.Model):
         abstract = True
 
 
-class Category(PublishedModel):
+class TitleModel(models.Model):
+    """Абстрактная модель для добавления поля title и метода __str__."""
+    
     title = models.CharField(
         max_length=FIELD_MAX_LENGTH,
-        verbose_name='Заголовок'
+        verbose_name='Заголовок',
     )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.title
+
+
+class Category(PublishedModel, TitleModel):
     description = models.TextField(verbose_name='Описание')
     slug = models.SlugField(
         unique=True,
@@ -37,9 +68,6 @@ class Category(PublishedModel):
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
         ordering = ('title',)
-
-    def __str__(self):
-        return self.title
 
 
 class Location(PublishedModel):
@@ -57,16 +85,13 @@ class Location(PublishedModel):
         return self.name
 
 
-class Post(PublishedModel):
+class Post(PublishedModel, TitleModel):
+    objects = PostQuerySet.as_manager()
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор публикации',
         related_name='posts',
-    )
-    title = models.CharField(
-        max_length=FIELD_MAX_LENGTH,
-        verbose_name='Заголовок'
     )
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
@@ -101,9 +126,6 @@ class Post(PublishedModel):
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         ordering = ('pub_date',)
-
-    def __str__(self):
-        return self.title
 
 
 class Comment(models.Model):
